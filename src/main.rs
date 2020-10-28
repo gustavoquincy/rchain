@@ -1,5 +1,5 @@
 mod rchain;
-use rchain::{Blockchain, Block, Transaction, TransactionData};
+use rchain::{Blockchain, Block, Transaction, TransactionData, WorldState};
 use std::borrow::BorrowMut;
 
 fn main() {
@@ -31,6 +31,10 @@ fn main() {
     println!("Genesis block successfully added: {:?}", res);
     println!("Full blockchain printout");
     println!("{:#?}", bc);
+    // print out total tokens in the chain
+    println!("Total tokens in bc is {:?}", bc.get_total_tokens());
+    // 2 blocks in bc
+    println!("The transaction record in block 0 is {:#?}", bc.get_transaction_for(0));
 
     // Transfer 1 token from alice to bob
     let mut block2 = Block::new(bc.get_last_block_hash());
@@ -42,6 +46,8 @@ fn main() {
     println!("Block added: {:?}", res);
     println!("Full blockchain printout");
     println!("{:#?}", bc);
+    println!("The transaction record in block 1 is {:#?}", bc.get_transaction_for(1));
+    println!("Total tokens in bc is {:?}", bc.get_total_tokens());
     println!("Blockchain valid: {:?}", bc.check_validity());
 
     // Everything is fine until here
@@ -53,6 +59,7 @@ fn main() {
     // let's clone the current blockchain before tempering
     let mut bc_attack_1 = bc.clone();
     // get the transaction as mutable (second block, first transaction; the token transfer)
+    // Bob tokens 
     let transaction_data = bc_attack_1.blocks[1].transactions[0].borrow_mut();
 
     // change the amount value of the transaction INSIDE the chain
@@ -61,10 +68,12 @@ fn main() {
             *amount = 100; // Actually change the value in place
         },
 
-        _ => {} // We know that that recors is a TransferToken Action so we ignore the rest
+        _ => {} // We know that that records is a TransferToken Action so we ignore the rest
     }
 
     println!("Changed transaction: {:?}", transaction_data.record);
+    println!("The transaction record in block 1 is {:#?}", bc_attack_1.get_transaction_for(1));
+    println!("Total tokens in bc_attack_1 is {:?}", bc_attack_1.get_total_tokens());
 
     // Will print an error, since the blocks hash changes for the
     println!("Is the Blockchain still valid? {:#?}", bc_attack_1.check_validity());
@@ -83,6 +92,9 @@ fn main() {
         },
         _ => {} // We know that that record is a Token Create Action so we ignore the rest
     }
+    println!("The transaction record in block 0 is {:#?}", bc_attack_2.get_transaction_for(0));
+    println!("Total tokens in bc_attack_2 is {:?}", bc_attack_2.get_total_tokens());
+    // the tokens the same across bc, bc_attack_1, bc_attack2 because tokens are registered under account
 
     // If we execute now, we'll see the same error as above, hashes dont match (this time 1st block)
 

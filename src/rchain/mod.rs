@@ -9,6 +9,7 @@ use std::string::String;
 use std::convert::From;
 
 
+
 /// The actual Blockchain container
 #[derive(Debug, Clone)]
 pub struct Blockchain {
@@ -42,6 +43,13 @@ pub trait WorldState {
 
     /// Will add a new account
     fn create_account(&mut self, id: String, account_type: AccountType) -> Result<(), &'static str>;
+
+    /// Walking through the chain to get total tokens 
+    fn get_total_tokens(&self) -> u128;
+
+    fn get_transaction_for(&self, id: usize) ->  Vec<Transaction>;
+
+    fn block_count(&self) -> usize;
 }
 
 /// One single part of the blockchain.
@@ -292,6 +300,22 @@ impl WorldState for Blockchain {
         } else {
             Err("User already exists! (Code: 934823094)")
         };
+    }
+
+    fn get_total_tokens(&self) -> u128 {
+        let mut total_tokens = 0;
+        for (_, account) in self.accounts.iter() {
+            total_tokens += account.tokens;
+        }
+        return total_tokens;
+    }
+
+    fn get_transaction_for(&self, id: usize) -> Vec<Transaction> {
+        self.blocks[id].clone().transactions
+    }
+
+    fn block_count(&self) -> usize {
+        self.blocks.len()
     }
 }
 
